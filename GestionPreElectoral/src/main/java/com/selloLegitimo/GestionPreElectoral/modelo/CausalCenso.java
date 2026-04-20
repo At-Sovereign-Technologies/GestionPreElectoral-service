@@ -1,0 +1,9 @@
+package com.selloLegitimo.GestionPreElectoral.modelo;
+
+public enum CausalCenso {
+	FUERZA_PUBLICA_ACTIVA,
+	INTERDICCION_JUDICIAL,
+	CONDENA_CON_PENA_ACCESORIA,
+	MAYOR_LIMITE_EDAD,
+	DISCAPACIDAD_REGISTRADA
+}

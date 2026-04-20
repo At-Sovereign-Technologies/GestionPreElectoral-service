@@ -1,0 +1,41 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: gestion-pre-electoral-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: gestion_pre_electoral
+      POSTGRES_USER: gestion_pre_electoral
+      POSTGRES_PASSWORD: gestion_pre_electoral
+    ports:
+      - "5434:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U gestion_pre_electoral -d gestion_pre_electoral"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # app:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   container_name: gestion-pre-electoral-app
+  #   restart: unless-stopped
+  #   depends_on:
+  #     postgres:
+  #       condition: service_healthy
+  #   environment:
+  #     DB_URL: jdbc:postgresql://postgres:5432/gestion_pre_electoral
+  #     DB_USUARIO: gestion_pre_electoral
+  #     DB_CLAVE: gestion_pre_electoral
+  #     PUERTO: 8082
+  #     SPRING_JPA_HIBERNATE_DDL_AUTO: update
+  #     CONFIGURACION_ELECCION_API_URL: http://host.docker.internal:8081/api/elecciones
+  #   ports:
+  #     - "8082:8082"
+
+volumes:
+  postgres_data:
