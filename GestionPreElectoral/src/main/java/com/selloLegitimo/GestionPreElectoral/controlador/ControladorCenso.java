@@ -16,6 +16,7 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.selloLegitimo.GestionPreElectoral.dto.ActualizarEstadoCensoSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.AutorizacionCierreSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CausalesEleccionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.EleccionResumenDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ImportarCensoApiSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.MensajeRespuestaDto;
@@ -45,6 +46,11 @@ public class ControladorCenso {
 	@GetMapping("/elecciones")
 	public List<EleccionResumenDto> listarElecciones() {
 		return servicioEleccion.listarElecciones();
+	}
+
+	@GetMapping("/elecciones/{eleccionId}/causales")
+	public CausalesEleccionDto obtenerCausales(@PathVariable Long eleccionId) {
+		return servicioEleccion.obtenerCausales(eleccionId);
 	}
 
 	@PostMapping("/registros")

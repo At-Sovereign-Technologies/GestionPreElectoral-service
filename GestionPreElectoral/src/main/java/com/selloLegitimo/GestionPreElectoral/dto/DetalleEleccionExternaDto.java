@@ -1,6 +1,7 @@
 package com.selloLegitimo.GestionPreElectoral.dto;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 import com.selloLegitimo.GestionPreElectoral.modelo.EstadoEleccion;
 
@@ -21,6 +22,7 @@ public class DetalleEleccionExternaDto {
 	private LocalDateTime fechaInicioModificacionCandidaturas;
 	private LocalDateTime fechaFinModificacionCandidaturas;
 	private LocalDateTime fechaLimiteReemplazoCandidaturas;
+	private List<String> excencionesHabilitadas;
 
 	public boolean estaCerrada() {
 		return EstadoEleccion.CERRADA.equals(this.estado)

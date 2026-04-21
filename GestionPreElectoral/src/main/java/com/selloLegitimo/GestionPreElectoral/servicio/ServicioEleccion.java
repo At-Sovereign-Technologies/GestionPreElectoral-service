@@ -8,6 +8,7 @@ import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.selloLegitimo.GestionPreElectoral.dto.CausalesEleccionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.DetalleEleccionExternaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.EleccionResumenDto;
 import com.selloLegitimo.GestionPreElectoral.excepcion.ExcepcionNegocio;
@@ -65,11 +66,55 @@ public class ServicioEleccion {
 					detalle.getDocumentoNoVotable(),
 					null,
 					null,
-					null);
+					null,
+					detalle.getExcencionesHabilitadasList());
 		} catch (StatusRuntimeException ex) {
 			logger.error("Error gRPC al obtener elección {}", eleccionId, ex);
 			throw new ExcepcionNegocio("No fue posible consultar la elección configurada para operar el censo");
 		}
+	}
+
+	@Transactional(readOnly = true)
+	public CausalesEleccionDto obtenerCausales(Long eleccionId) {
+		DetalleEleccionExternaDto eleccion = obtenerEleccion(eleccionId);
+		List<CausalesEleccionDto.CausalItemDto> excluido = List.of(
+				new CausalesEleccionDto.CausalItemDto("INTERDICCION_JUDICIAL", "Interdicción judicial"),
+				new CausalesEleccionDto.CausalItemDto("CONDENA_CON_PENA_ACCESORIA", "Condena con pena accesoria"));
+		List<CausalesEleccionDto.CausalItemDto> exento = eleccion.getExcencionesHabilitadas().stream()
+				.map(texto -> mapearExencion(texto))
+				.filter(item -> item != null)
+				.distinct()
+				.collect(java.util.stream.Collectors.toList());
+		// Si no hubo exenciones configuradas, usar valores por defecto
+		if (exento.isEmpty()) {
+			exento = List.of(
+					new CausalesEleccionDto.CausalItemDto("MAYOR_LIMITE_EDAD", "Mayor del límite de edad"),
+					new CausalesEleccionDto.CausalItemDto("DISCAPACIDAD_REGISTRADA", "Discapacidad registrada"),
+					new CausalesEleccionDto.CausalItemDto("FUERZA_PUBLICA_ACTIVA", "Personal activo fuerzas militares y policía"));
+		}
+		return new CausalesEleccionDto(excluido, exento);
+	}
+
+	private CausalesEleccionDto.CausalItemDto mapearExencion(String texto) {
+		if (texto == null) return null;
+		String u = texto.toUpperCase();
+		if (u.contains("DISCAPACIDAD")) {
+			return new CausalesEleccionDto.CausalItemDto("DISCAPACIDAD_REGISTRADA", capitalizar(texto));
+		}
+		if (u.contains("MILITARES") || u.contains("POLICI") || u.contains("FUERZA P")) {
+			return new CausalesEleccionDto.CausalItemDto("FUERZA_PUBLICA_ACTIVA", capitalizar(texto));
+		}
+		if (u.contains("MAYOR") || u.contains("EDAD") || u.contains("LIMITE")) {
+			return new CausalesEleccionDto.CausalItemDto("MAYOR_LIMITE_EDAD", capitalizar(texto));
+		}
+		// exencion no mapeable a CausalCenso conocida
+		return null;
+	}
+
+	private String capitalizar(String texto) {
+		if (texto == null || texto.isBlank()) return texto;
+		String lower = texto.toLowerCase();
+		return Character.toUpperCase(lower.charAt(0)) + lower.substring(1);
 	}
 
 	private LocalDateTime parseFecha(String fecha) {
