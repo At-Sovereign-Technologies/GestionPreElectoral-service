@@ -38,6 +38,12 @@ public class Ciudadano {
 	@Column(name = "fecha_nacimiento")
 	private LocalDate fechaNacimiento;
 
+	@Column(name = "departamento", length = 80)
+	private String departamento;
+
+	@Column(name = "municipio", length = 120)
+	private String municipio;
+
 	@Column(name = "fecha_creacion", nullable = false)
 	private LocalDateTime fechaCreacion;
 
@@ -53,6 +59,16 @@ public class Ciudadano {
 		this.nombres = nombres;
 		this.apellidos = apellidos;
 		this.fechaNacimiento = fechaNacimiento;
+	}
+
+	public Ciudadano(String tipoDocumento, String numeroDocumento, String nombres, String apellidos, LocalDate fechaNacimiento, String departamento, String municipio) {
+		this.tipoDocumento = tipoDocumento;
+		this.numeroDocumento = numeroDocumento;
+		this.nombres = nombres;
+		this.apellidos = apellidos;
+		this.fechaNacimiento = fechaNacimiento;
+		this.departamento = departamento;
+		this.municipio = municipio;
 	}
 
 	@PrePersist
@@ -71,6 +87,11 @@ public class Ciudadano {
 		this.nombres = nombres;
 		this.apellidos = apellidos;
 		this.fechaNacimiento = fechaNacimiento;
+	}
+
+	public void actualizarDatosGeo(String departamento, String municipio) {
+		this.departamento = departamento;
+		this.municipio = municipio;
 	}
 
 	public Long getId() {
@@ -95,5 +116,13 @@ public class Ciudadano {
 
 	public LocalDate getFechaNacimiento() {
 		return fechaNacimiento;
+	}
+
+	public String getDepartamento() {
+		return departamento;
+	}
+
+	public String getMunicipio() {
+		return municipio;
 	}
 }

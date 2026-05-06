@@ -110,6 +110,10 @@ public class Candidatura {
 		this.actorUltimaModificacion = actor;
 	}
 
+	public void actualizarFotoUrl(String fotoUrl) {
+		this.fotoUrl = fotoUrl;
+	}
+
 	public void actualizarEstado(EstadoCandidatura estado, String actor) {
 		this.estado = estado;
 		this.actorUltimaModificacion = actor;

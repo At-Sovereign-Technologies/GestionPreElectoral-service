@@ -60,6 +60,9 @@ public class ServicioCandidatura {
 	@Autowired
 	private GeneradorTarjeton generadorTarjeton;
 
+	@Autowired
+	private com.selloLegitimo.GestionPreElectoral.repositorio.RegistroCensoRepositorio registroCensoRepositorio;
+
 	// =========================
 	// REGISTRO / POSTULACIÓN
 	// =========================
@@ -69,6 +72,14 @@ public class ServicioCandidatura {
 		DetalleEleccionExternaDto eleccion = servicioEleccion.obtenerEleccion(solicitud.getEleccionId());
 		validarPeriodoModificacion(eleccion);
 		validarDocumentoUnico(eleccion.getId(), solicitud.getDocumento(), null);
+
+		long ciudadanosEnCenso = registroCensoRepositorio
+				.countByEleccionIdAndDocumentoHabilitado(eleccion.getId(), solicitud.getDocumento());
+		if (ciudadanosEnCenso == 0) {
+			throw new ExcepcionNegocio(
+					"El ciudadano con documento " + solicitud.getDocumento()
+					+ " no se encuentra habilitado en el censo para esta eleccion");
+		}
 
 		Candidatura candidatura = new Candidatura(
 				eleccion.getId(), solicitud.getNombreCandidato(), solicitud.getDocumento(),
@@ -219,6 +230,11 @@ public class ServicioCandidatura {
 	}
 
 	@Transactional(readOnly = true)
+	public List<String> listarDocumentosPorEleccion(Long eleccionId) {
+		return candidaturaRepositorio.findDocumentosByEleccionId(eleccionId);
+	}
+
+	@Transactional(readOnly = true)
 	public Candidatura obtenerEntidad(Long candidaturaId) {
 		return candidaturaRepositorio.findById(candidaturaId)
 				.orElseThrow(() -> new RecursoNoEncontradoExcepcion("No existe la candidatura con id " + candidaturaId));
@@ -244,6 +260,19 @@ public class ServicioCandidatura {
 	@Transactional(readOnly = true)
 	public TarjetonRespuestaDto obtenerUltimoTarjeton(Long eleccionId) {
 		return generadorTarjeton.obtenerUltimoTarjeton(eleccionId);
+	}
+
+	// =========================
+	// FOTO
+	// =========================
+
+	@Transactional
+	public CandidaturaRespuestaDto actualizarFotoUrl(Long candidaturaId, String fotoUrl) {
+		Candidatura candidatura = obtenerEntidad(candidaturaId);
+		candidatura.actualizarFotoUrl(fotoUrl);
+		candidaturaRepositorio.save(candidatura);
+		logger.info("Foto URL actualizada para candidatura={}", candidaturaId);
+		return mapear(candidatura);
 	}
 
 	// =========================

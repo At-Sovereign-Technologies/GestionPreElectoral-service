@@ -20,8 +20,10 @@ import com.selloLegitimo.GestionPreElectoral.dto.CausalesEleccionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.EleccionResumenDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ImportarCensoApiSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.MensajeRespuestaDto;
+import com.selloLegitimo.GestionPreElectoral.dto.PaginaCensoRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.RegistrarCiudadanoCensoSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.RegistroCensoRespuestaDto;
+import com.selloLegitimo.GestionPreElectoral.dto.ResumenCensoDto;
 import com.selloLegitimo.GestionPreElectoral.servicio.ServicioCenso;
 import com.selloLegitimo.GestionPreElectoral.servicio.ServicioEleccion;
 
@@ -65,8 +67,17 @@ public class ControladorCenso {
 	}
 
 	@GetMapping("/elecciones/{eleccionId}/registros")
-	public List<RegistroCensoRespuestaDto> listarPorEleccion(@PathVariable Long eleccionId) {
-		return servicioCenso.listarPorEleccion(eleccionId);
+	public PaginaCensoRespuestaDto listarPorEleccion(@PathVariable Long eleccionId,
+			@RequestParam(required = false) String estado,
+			@RequestParam(required = false) String search,
+			@RequestParam(defaultValue = "0") int pagina,
+			@RequestParam(defaultValue = "10") int tamano) {
+		return servicioCenso.listarPorEleccion(eleccionId, estado, search, pagina, tamano);
+	}
+
+	@GetMapping("/elecciones/{eleccionId}/resumen")
+	public ResumenCensoDto obtenerResumen(@PathVariable Long eleccionId) {
+		return servicioCenso.obtenerResumen(eleccionId);
 	}
 
 	@PostMapping("/importaciones/csv")

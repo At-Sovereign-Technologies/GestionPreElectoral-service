@@ -7,8 +7,8 @@ import java.io.Reader;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.util.Arrays;
-import java.util.Optional;
 import java.util.List;
+import java.util.Optional;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -16,6 +16,12 @@ import org.apache.commons.csv.CSVRecord;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
@@ -25,9 +31,11 @@ import com.selloLegitimo.GestionPreElectoral.dto.ActualizarEstadoCensoSolicitudD
 import com.selloLegitimo.GestionPreElectoral.dto.AutorizacionCierreSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.DetalleEleccionExternaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ImportarCensoApiSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.PaginaCensoRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.RegistrarCiudadanoCensoSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.RegistroCensoRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.RegistroImportacionExternaDto;
+import com.selloLegitimo.GestionPreElectoral.dto.ResumenCensoDto;
 import com.selloLegitimo.GestionPreElectoral.excepcion.ExcepcionNegocio;
 import com.selloLegitimo.GestionPreElectoral.excepcion.RecursoNoEncontradoExcepcion;
 import com.selloLegitimo.GestionPreElectoral.modelo.Ciudadano;
@@ -54,20 +62,33 @@ public class ServicioCenso {
 	private RestClient clienteRest;
 
 	@Transactional
+	@CacheEvict(value = { "censo", "censoResumen" }, allEntries = true)
 	public RegistroCensoRespuestaDto registrarManual(RegistrarCiudadanoCensoSolicitudDto solicitud) {
+		return procesarRegistro(solicitud);
+	}
+
+	private RegistroCensoRespuestaDto procesarRegistro(RegistrarCiudadanoCensoSolicitudDto solicitud) {
 		DetalleEleccionExternaDto eleccion = servicioEleccion.obtenerEleccion(solicitud.getEleccionId());
 		validarEstadoCerrado(eleccion, solicitud.getActor(), solicitud.getAutorizacionCierre());
 		validarCoherenciaEstado(solicitud.getEstado(), solicitud.getCausalEstado());
-		validarDocumentoNoVotable(eleccion, solicitud.getTipoDocumento());
 
 		Ciudadano ciudadano = ciudadanoRepositorio
 			.findByTipoDocumentoAndNumeroDocumento(solicitud.getTipoDocumento(), solicitud.getNumeroDocumento())
-			.map(existente -> actualizarCiudadano(existente, solicitud))
-			.orElseGet(() -> ciudadanoRepositorio.save(new Ciudadano(solicitud.getTipoDocumento(), solicitud.getNumeroDocumento(),
-					solicitud.getNombres(), solicitud.getApellidos(), solicitud.getFechaNacimiento())));
+			.map(existente -> {
+				existente.actualizarDatos(solicitud.getNombres(), solicitud.getApellidos(), solicitud.getFechaNacimiento());
+				if (solicitud.getDepartamento() != null) {
+					existente.actualizarDatosGeo(solicitud.getDepartamento(), solicitud.getMunicipio());
+				}
+				return existente;
+			})
+			.orElseGet(() -> {
+				Ciudadano nuevo = new Ciudadano(solicitud.getTipoDocumento(), solicitud.getNumeroDocumento(),
+					solicitud.getNombres(), solicitud.getApellidos(), solicitud.getFechaNacimiento(),
+					solicitud.getDepartamento(), solicitud.getMunicipio());
+				return ciudadanoRepositorio.save(nuevo);
+			});
 
 		Optional<RegistroCenso> registroExistente = registroCensoRepositorio.findByEleccionIdAndCiudadano(eleccion.getId(), ciudadano);
-		boolean esNuevoRegistro = registroExistente.isEmpty();
 		RegistroCenso registro = registroExistente
 			.map(existente -> actualizarRegistro(existente, solicitud.getEstado(), solicitud.getCausalEstado(), solicitud.getObservacion(), solicitud.getActor()))
 			.orElseGet(() -> registroCensoRepositorio.save(new RegistroCenso(eleccion.getId(), ciudadano, solicitud.getEstado(),
@@ -77,6 +98,7 @@ public class ServicioCenso {
 	}
 
 	@Transactional
+	@CacheEvict(value = { "censo", "censoResumen" }, allEntries = true)
 	public RegistroCensoRespuestaDto actualizarEstado(Long registroId, ActualizarEstadoCensoSolicitudDto solicitud) {
 		RegistroCenso registro = registroCensoRepositorio.findById(registroId)
 			.orElseThrow(() -> new RecursoNoEncontradoExcepcion("No existe el registro de censo con id " + registroId));
@@ -89,14 +111,40 @@ public class ServicioCenso {
 	}
 
 	@Transactional(readOnly = true)
-	public List<RegistroCensoRespuestaDto> listarPorEleccion(Long eleccionId) {
-		return registroCensoRepositorio.findByEleccionIdOrderByFechaActualizacionDesc(eleccionId)
-			.stream()
-			.map(this::mapear)
-			.toList();
+	@Cacheable(value = "censo", key = "#eleccionId + '-' + (#estado != null ? #estado : 'null') + '-' + (#search != null ? #search : 'null') + '-' + #pagina + '-' + #tamano")
+	public PaginaCensoRespuestaDto listarPorEleccion(Long eleccionId, String estado, String search, int pagina, int tamano) {
+		EstadoCenso estadoFiltro = null;
+		if (estado != null && !estado.isBlank()) {
+			estadoFiltro = EstadoCenso.valueOf(estado.toUpperCase());
+		}
+		Pageable pageable = PageRequest.of(pagina, tamano, Sort.by("fechaActualizacion").descending());
+		Page<RegistroCenso> paginaResultados = registroCensoRepositorio.buscarPaginado(eleccionId, estadoFiltro, search, pageable);
+		List<RegistroCensoRespuestaDto> contenido = paginaResultados.getContent().stream().map(this::mapear).toList();
+		return new PaginaCensoRespuestaDto(contenido, paginaResultados.getTotalElements(),
+				paginaResultados.getTotalPages(), paginaResultados.getNumber(), paginaResultados.getSize());
+	}
+
+	@Transactional(readOnly = true)
+	@Cacheable(value = "censoResumen", key = "#eleccionId")
+	public ResumenCensoDto obtenerResumen(Long eleccionId) {
+		List<Object[]> resultados = registroCensoRepositorio.contarPorEstado(eleccionId);
+		long habilitados = 0;
+		long excluidos = 0;
+		long exentos = 0;
+		for (Object[] fila : resultados) {
+			EstadoCenso estado = (EstadoCenso) fila[0];
+			long cantidad = (Long) fila[1];
+			switch (estado) {
+				case HABILITADO -> habilitados = cantidad;
+				case EXCLUIDO -> excluidos = cantidad;
+				case EXENTO -> exentos = cantidad;
+			}
+		}
+		return new ResumenCensoDto(habilitados + excluidos + exentos, habilitados, excluidos, exentos);
 	}
 
 	@Transactional
+	@CacheEvict(value = { "censo", "censoResumen" }, allEntries = true)
 	public int importarCsv(Long eleccionId, MultipartFile archivo, String actor, AutorizacionCierreSolicitudDto autorizacionCierre) {
 		DetalleEleccionExternaDto eleccion = servicioEleccion.obtenerEleccion(eleccionId);
 		validarEstadoCerrado(eleccion, actor, autorizacionCierre);
@@ -107,11 +155,16 @@ public class ServicioCenso {
 				CSVParser parser = CSVFormat.DEFAULT.builder().setHeader().setSkipHeaderRecord(true).build().parse(reader)) {
 			int procesados = 0;
 			for (CSVRecord record : parser) {
+				String departamentoCsv = record.isMapped("departamento") ? record.get("departamento") : null;
+				String municipioCsv = record.isMapped("municipio") ? record.get("municipio") : null;
 				RegistrarCiudadanoCensoSolicitudDto solicitud = new RegistrarCiudadanoCensoSolicitudDto(eleccionId,
 						record.get("tipoDocumento").trim(), record.get("numeroDocumento").trim(), record.get("nombres").trim(), record.get("apellidos").trim(),
-						parsearFecha(record.get("fechaNacimiento")), EstadoCenso.valueOf(record.get("estado").trim().toUpperCase()),
+						parsearFecha(record.get("fechaNacimiento")),
+						departamentoCsv != null && !departamentoCsv.isBlank() ? departamentoCsv.trim() : null,
+						municipioCsv != null && !municipioCsv.isBlank() ? municipioCsv.trim() : null,
+						EstadoCenso.valueOf(record.get("estado").trim().toUpperCase()),
 						parsearCausal(record.get("causalEstado")), record.get("observacion"), actor, autorizacionCierre);
-				registrarManual(solicitud);
+				procesarRegistro(solicitud);
 				procesados++;
 			}
 			logger.info("Importación CSV completada. elección={}, total={}, actor={}", eleccionId, procesados, actor);
@@ -122,6 +175,7 @@ public class ServicioCenso {
 	}
 
 	@Transactional
+	@CacheEvict(value = { "censo", "censoResumen" }, allEntries = true)
 	public int importarApi(ImportarCensoApiSolicitudDto solicitud) {
 		DetalleEleccionExternaDto eleccion = servicioEleccion.obtenerEleccion(solicitud.getEleccionId());
 		validarEstadoCerrado(eleccion, solicitud.getActor(), solicitud.getAutorizacionCierre());
@@ -140,17 +194,13 @@ public class ServicioCenso {
 			throw new ExcepcionNegocio("La fuente externa no devolvió registros");
 		}
 
-		Arrays.stream(registrosExternos).forEach(registro -> registrarManual(new RegistrarCiudadanoCensoSolicitudDto(
+		Arrays.stream(registrosExternos).forEach(registro -> procesarRegistro(new RegistrarCiudadanoCensoSolicitudDto(
 				solicitud.getEleccionId(), registro.getTipoDocumento(), registro.getNumeroDocumento(), registro.getNombres(),
-				registro.getApellidos(), registro.getFechaNacimiento(), registro.getEstado(), registro.getCausalEstado(),
+				registro.getApellidos(), registro.getFechaNacimiento(), registro.getDepartamento(), registro.getMunicipio(),
+				registro.getEstado(), registro.getCausalEstado(),
 				registro.getObservacion(), solicitud.getActor(), solicitud.getAutorizacionCierre())));
 		logger.info("Importación API completada. elección={}, total={}, actor={}", solicitud.getEleccionId(), registrosExternos.length, solicitud.getActor());
 		return registrosExternos.length;
-	}
-
-	private Ciudadano actualizarCiudadano(Ciudadano ciudadano, RegistrarCiudadanoCensoSolicitudDto solicitud) {
-		ciudadano.actualizarDatos(solicitud.getNombres(), solicitud.getApellidos(), solicitud.getFechaNacimiento());
-		return ciudadano;
 	}
 
 	private RegistroCenso actualizarRegistro(RegistroCenso registro, EstadoCenso estado, CausalCenso causalEstado,
@@ -181,21 +231,6 @@ public class ServicioCenso {
 		}
 	}
 
-	private void validarDocumentoNoVotable(DetalleEleccionExternaDto eleccion, String tipoDocumento) {
-		if (tipoDocumento == null || tipoDocumento.isBlank()) {
-			return;
-		}
-
-		if (eleccion.getDocumentoNoVotable() == null || eleccion.getDocumentoNoVotable().isBlank()) {
-			return;
-		}
-
-		if ("TI".equalsIgnoreCase(tipoDocumento.trim())
-				&& "TI".equalsIgnoreCase(eleccion.getDocumentoNoVotable().trim())) {
-			throw new ExcepcionNegocio("La elección activa tiene TI como documento no votable. No se puede registrar ni importar un ciudadano con documento TI.");
-		}
-	}
-
 	private LocalDate parsearFecha(String valor) {
 		if (valor == null || valor.isBlank()) {
 			return null;
@@ -214,7 +249,9 @@ public class ServicioCenso {
 		return new RegistroCensoRespuestaDto(registro.getId(), registro.getEleccionId(),
 				registro.getCiudadano().getTipoDocumento(), registro.getCiudadano().getNumeroDocumento(),
 				registro.getCiudadano().getNombres(), registro.getCiudadano().getApellidos(),
-				registro.getCiudadano().getFechaNacimiento(), registro.getEstado(), registro.getCausalEstado(),
+				registro.getCiudadano().getFechaNacimiento(), registro.getCiudadano().getDepartamento(),
+				registro.getCiudadano().getMunicipio(),
+				registro.getEstado(), registro.getCausalEstado(),
 				registro.getObservacion(), registro.getActorUltimaModificacion(), registro.getFechaActualizacion());
 	}
 }

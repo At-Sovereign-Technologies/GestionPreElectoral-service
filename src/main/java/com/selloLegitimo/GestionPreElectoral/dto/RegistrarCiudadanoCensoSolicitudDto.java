@@ -32,6 +32,10 @@ public class RegistrarCiudadanoCensoSolicitudDto {
 
 	private LocalDate fechaNacimiento;
 
+	private String departamento;
+
+	private String municipio;
+
 	@NotNull
 	private EstadoCenso estado;
 

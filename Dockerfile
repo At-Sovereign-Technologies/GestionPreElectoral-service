@@ -17,6 +17,8 @@ WORKDIR /app
 
 RUN addgroup -g 1000 app && adduser -u 1000 -G app -S app
 
+RUN mkdir -p /data/fotos-candidatos && chown -R app:app /data
+
 COPY --from=compilacion /app/target/GestionPreElectoral-0.0.1-SNAPSHOT.jar app.jar
 RUN chown app:app /app/app.jar
 

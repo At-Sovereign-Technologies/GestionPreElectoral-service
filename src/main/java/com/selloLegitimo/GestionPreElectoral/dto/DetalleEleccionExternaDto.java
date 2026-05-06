@@ -32,7 +32,7 @@ public class DetalleEleccionExternaDto {
 
 	public boolean estaDentroPeriodoModificacionCandidaturas() {
 		if (this.fechaInicioModificacionCandidaturas == null || this.fechaFinModificacionCandidaturas == null) {
-			return false;
+			return true;
 		}
 		LocalDateTime ahora = LocalDateTime.now();
 		return !ahora.isBefore(this.fechaInicioModificacionCandidaturas)

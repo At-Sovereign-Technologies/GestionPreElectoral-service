@@ -21,6 +21,8 @@ public class RegistroCensoRespuestaDto {
 	private String nombres;
 	private String apellidos;
 	private LocalDate fechaNacimiento;
+	private String departamento;
+	private String municipio;
 	private EstadoCenso estado;
 	private CausalCenso causalEstado;
 	private String observacion;
