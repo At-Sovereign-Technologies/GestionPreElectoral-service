@@ -16,6 +16,7 @@ import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import jakarta.persistence.UniqueConstraint;
+import jakarta.persistence.Version;
 
 @Entity
 @Table(name = "candidaturas", uniqueConstraints = {
@@ -68,6 +69,10 @@ public class Candidatura {
 
 	@Column(name = "fecha_actualizacion", nullable = false)
 	private LocalDateTime fechaActualizacion;
+
+	@Version
+	@Column(nullable = false)
+	private Long version = 0L;
 
 	public Candidatura() {
 	}
@@ -180,5 +185,20 @@ public class Candidatura {
 
 	public LocalDateTime getFechaActualizacion() {
 		return fechaActualizacion;
+	}
+
+	public Long getVersion() {
+		return version;
+	}
+
+	public boolean esEditablePorPostulante() {
+		return this.estado == EstadoCandidatura.BORRADOR || this.estado == EstadoCandidatura.POSTULADO;
+	}
+
+	public boolean esTerminal() {
+		return this.estado == EstadoCandidatura.RECHAZADO
+				|| this.estado == EstadoCandidatura.BLOQUEADO
+				|| this.estado == EstadoCandidatura.REEMPLAZADA
+				|| this.estado == EstadoCandidatura.REVOCADA;
 	}
 }

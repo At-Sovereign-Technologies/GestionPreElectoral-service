@@ -11,7 +11,7 @@ import lombok.NoArgsConstructor;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ActualizarEstadoCandidaturaSolicitudDto {
+public class TransicionEstadoSolicitudDto {
 	@NotNull
 	private EstadoCandidatura estado;
 
@@ -19,4 +19,7 @@ public class ActualizarEstadoCandidaturaSolicitudDto {
 	private String actor;
 
 	private String justificacion;
+
+	@NotBlank
+	private String rol;
 }

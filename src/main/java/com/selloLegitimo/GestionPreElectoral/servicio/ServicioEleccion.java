@@ -64,10 +64,11 @@ public class ServicioEleccion {
 					parseFecha(detalle.getFechaInicioJornada()),
 					parseFecha(detalle.getFechaCierreJornada()),
 					detalle.getDocumentoNoVotable(),
-					null,
-					null,
-					null,
-					detalle.getExcencionesHabilitadasList());
+					parseFecha(detalle.getFechaInicioModCandidaturas()),
+					parseFecha(detalle.getFechaFinModCandidaturas()),
+					parseFecha(detalle.getFechaLimiteReemplazoCandidaturas()),
+					detalle.getExcencionesHabilitadasList(),
+					detalle.getEdadMinimaCandidatura());
 		} catch (StatusRuntimeException ex) {
 			logger.error("Error gRPC al obtener elección {}", eleccionId, ex);
 			throw new ExcepcionNegocio("No fue posible consultar la elección configurada para operar el censo");

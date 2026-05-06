@@ -23,6 +23,7 @@ public class DetalleEleccionExternaDto {
 	private LocalDateTime fechaFinModificacionCandidaturas;
 	private LocalDateTime fechaLimiteReemplazoCandidaturas;
 	private List<String> excencionesHabilitadas;
+	private Integer edadMinimaCandidatura;
 
 	public boolean estaCerrada() {
 		return EstadoEleccion.CERRADA.equals(this.estado)

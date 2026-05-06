@@ -1,9 +1,9 @@
-CREATE SCHEMA gestion_pre_electoral;
+CREATE SCHEMA IF NOT EXISTS gestion_pre_electoral;
 
 -- =========================
 -- CIUDADANOS
 -- =========================
-CREATE TABLE gestion_pre_electoral.ciudadanos (
+CREATE TABLE IF NOT EXISTS gestion_pre_electoral.ciudadanos (
     id BIGSERIAL PRIMARY KEY,
     tipo_documento VARCHAR(20) NOT NULL,
     numero_documento VARCHAR(30) NOT NULL,
@@ -18,7 +18,7 @@ CREATE TABLE gestion_pre_electoral.ciudadanos (
 -- =========================
 -- REGISTROS CENSO
 -- =========================
-CREATE TABLE gestion_pre_electoral.registros_censo (
+CREATE TABLE IF NOT EXISTS gestion_pre_electoral.registros_censo (
     id BIGSERIAL PRIMARY KEY,
     eleccion_id BIGINT NOT NULL,
     ciudadano_id BIGINT NOT NULL,
@@ -53,7 +53,7 @@ CREATE TABLE gestion_pre_electoral.registros_censo (
 -- =========================
 -- CANDIDATURAS
 -- =========================
-CREATE TABLE gestion_pre_electoral.candidaturas (
+CREATE TABLE IF NOT EXISTS gestion_pre_electoral.candidaturas (
     id BIGSERIAL PRIMARY KEY,
     eleccion_id BIGINT NOT NULL,
     nombre_candidato VARCHAR(180) NOT NULL,
@@ -98,14 +98,14 @@ CREATE TABLE gestion_pre_electoral.candidaturas (
 -- =========================
 -- ÍNDICES
 -- =========================
-CREATE INDEX idx_registros_censo_eleccion_id
+CREATE INDEX IF NOT EXISTS idx_registros_censo_eleccion_id
     ON gestion_pre_electoral.registros_censo (eleccion_id);
 
-CREATE INDEX idx_registros_censo_ciudadano_id
+CREATE INDEX IF NOT EXISTS idx_registros_censo_ciudadano_id
     ON gestion_pre_electoral.registros_censo (ciudadano_id);
 
-CREATE INDEX idx_candidaturas_eleccion_id
+CREATE INDEX IF NOT EXISTS idx_candidaturas_eleccion_id
     ON gestion_pre_electoral.candidaturas (eleccion_id);
 
-CREATE INDEX idx_candidaturas_reemplazada_id
+CREATE INDEX IF NOT EXISTS idx_candidaturas_reemplazada_id
     ON gestion_pre_electoral.candidaturas (candidatura_reemplazada_id);

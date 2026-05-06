@@ -27,4 +27,5 @@ public class CandidaturaRespuestaDto {
 	private String actorUltimaModificacion;
 	private LocalDateTime fechaInscripcion;
 	private LocalDateTime fechaActualizacion;
+	private Long version;
 }

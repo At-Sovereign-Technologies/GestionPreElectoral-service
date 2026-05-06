@@ -1,10 +1,13 @@
 package com.selloLegitimo.GestionPreElectoral.modelo;
 
 public enum EstadoCandidatura {
-	INSCRITA,
-	EN_REVISION,
-	ACEPTADA,
-	RECHAZADA,
-	REVOCADA,
-	REEMPLAZADA
+	BORRADOR,
+	POSTULADO,
+	EN_VALIDACION,
+	APROBADO,
+	RECHAZADO,
+	PUBLICADO,
+	BLOQUEADO,
+	REEMPLAZADA,
+	REVOCADA
 }
