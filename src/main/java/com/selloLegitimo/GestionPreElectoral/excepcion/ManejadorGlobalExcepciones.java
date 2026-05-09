@@ -25,6 +25,12 @@ public class ManejadorGlobalExcepciones {
 			.body(new ErrorRespuestaDto(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
 	}
 
+	@ExceptionHandler(ExcepcionAccesoDenegado.class)
+	public ResponseEntity<ErrorRespuestaDto> manejarAccesoDenegado(ExcepcionAccesoDenegado ex) {
+		return ResponseEntity.status(HttpStatus.FORBIDDEN)
+			.body(new ErrorRespuestaDto(LocalDateTime.now(), HttpStatus.FORBIDDEN.value(), ex.getMessage()));
+	}
+
 	@ExceptionHandler(MethodArgumentNotValidException.class)
 	public ResponseEntity<ErrorRespuestaDto> manejarValidacion(MethodArgumentNotValidException ex) {
 		String mensaje = ex.getBindingResult().getFieldErrors().stream()
