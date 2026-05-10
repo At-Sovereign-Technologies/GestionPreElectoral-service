@@ -35,6 +35,9 @@ public interface RegistroCensoRepositorio extends JpaRepository<RegistroCenso, L
 
 	@Query("SELECT r.estado, COUNT(r) FROM RegistroCenso r WHERE r.eleccionId = :eleccionId GROUP BY r.estado")
 	List<Object[]> contarPorEstado(@Param("eleccionId") Long eleccionId);
+
+	@Query("SELECT r.hashBiometrico FROM RegistroCenso r WHERE r.eleccionId = :eleccionId AND r.hashBiometrico IS NOT NULL ORDER BY r.id")
+	List<String> encontrarHashesBiometricosPorEleccionId(@Param("eleccionId") Long eleccionId);
 	@Query("""
 		SELECT COUNT(r) FROM RegistroCenso r JOIN r.ciudadano c
 		WHERE r.eleccionId = :eleccionId
