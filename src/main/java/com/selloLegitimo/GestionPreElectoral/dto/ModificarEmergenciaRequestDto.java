@@ -1,13 +1,25 @@
 package com.selloLegitimo.GestionPreElectoral.dto;
 
-import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class ModificarEmergenciaRequestDto {
 
+    @NotBlank(message = "ciudadanoId es obligatorio")
     private String ciudadanoId;
+
+    @NotBlank(message = "nuevaZona es obligatoria")
     private String nuevaZona;
+
+    @NotBlank(message = "justificacion es obligatoria")
+    @Size(min = 20, message = "justificacion debe tener al menos 20 caracteres")
     private String justificacion;
-    private JsonNode firmas; // JSON con firmas múltiples (superadmin, CNE, etc.)
+
+    @NotNull(message = "firmas multi-institucionales son obligatorias")
+    @Valid
+    private FirmasModificacionDto firmas;
 
     public String getCiudadanoId() {
         return ciudadanoId;
@@ -33,11 +45,11 @@ public class ModificarEmergenciaRequestDto {
         this.justificacion = justificacion;
     }
 
-    public JsonNode getFirmas() {
+    public FirmasModificacionDto getFirmas() {
         return firmas;
     }
 
-    public void setFirmas(JsonNode firmas) {
+    public void setFirmas(FirmasModificacionDto firmas) {
         this.firmas = firmas;
     }
 }

@@ -30,6 +30,21 @@ public class ListaBlancaAuditoria {
     @Column(name = "fecha_modificacion")
     private LocalDateTime fechaModificacion;
 
+    @Column(name = "zona_anterior")
+    private String zonaAnterior;
+
+    @Column(name = "zona_nueva")
+    private String zonaNueva;
+
+    @Column(name = "firmante_superadmin")
+    private String firmanteSuperadmin;
+
+    @Column(name = "firmante_cne")
+    private String firmanteCne;
+
+    @Column(name = "evento_auditoria_id")
+    private Long eventoAuditoriaId;
+
     public ListaBlancaAuditoria() {}
 
     public UUID getId() {
@@ -78,5 +93,45 @@ public class ListaBlancaAuditoria {
 
     public void setFechaModificacion(LocalDateTime fechaModificacion) {
         this.fechaModificacion = fechaModificacion;
+    }
+
+    public String getZonaAnterior() {
+        return zonaAnterior;
+    }
+
+    public void setZonaAnterior(String zonaAnterior) {
+        this.zonaAnterior = zonaAnterior;
+    }
+
+    public String getZonaNueva() {
+        return zonaNueva;
+    }
+
+    public void setZonaNueva(String zonaNueva) {
+        this.zonaNueva = zonaNueva;
+    }
+
+    public String getFirmanteSuperadmin() {
+        return firmanteSuperadmin;
+    }
+
+    public void setFirmanteSuperadmin(String firmanteSuperadmin) {
+        this.firmanteSuperadmin = firmanteSuperadmin;
+    }
+
+    public String getFirmanteCne() {
+        return firmanteCne;
+    }
+
+    public void setFirmanteCne(String firmanteCne) {
+        this.firmanteCne = firmanteCne;
+    }
+
+    public Long getEventoAuditoriaId() {
+        return eventoAuditoriaId;
+    }
+
+    public void setEventoAuditoriaId(Long eventoAuditoriaId) {
+        this.eventoAuditoriaId = eventoAuditoriaId;
     }
 }
