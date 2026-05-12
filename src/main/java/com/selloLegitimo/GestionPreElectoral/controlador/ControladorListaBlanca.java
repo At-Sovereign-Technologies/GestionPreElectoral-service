@@ -1,5 +1,6 @@
 package com.selloLegitimo.GestionPreElectoral.controlador;
 
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PutMapping;
@@ -36,8 +37,8 @@ public class ControladorListaBlanca {
     }
 
     @PutMapping("/modificar-emergencia")
-    public ResponseEntity<Void> modificarEmergencia(@RequestBody ModificarEmergenciaRequestDto req) {
-        servicio.modificarEmergencia(req.getCiudadanoId(), req.getNuevaZona(), req.getJustificacion(), req.getFirmas());
+    public ResponseEntity<Void> modificarEmergencia(@Valid @RequestBody ModificarEmergenciaRequestDto req) {
+        servicio.modificarEmergencia(req);
         return ResponseEntity.ok().build();
     }
 }
