@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.RestController;
 import com.fasterxml.jackson.databind.ObjectMapper;
 
 @RestController
-@RequestMapping("/api/v1/auth")
+@RequestMapping("/api/v1/auth-mock")
 public class ControladorAuthMock {
 
     private static final Map<String, String> OTP_STORE = new ConcurrentHashMap<>();

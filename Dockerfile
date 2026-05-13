@@ -10,9 +10,10 @@ RUN chmod +x mvnw
 RUN ./mvnw -q -DskipTests dependency:go-offline
 
 COPY src src
-RUN ./mvnw -q -DskipTests package
+RUN ./mvnw -q -DskipTests clean package
 
 FROM eclipse-temurin:17-jre-alpine
+RUN apk add --no-cache curl
 WORKDIR /app
 
 RUN addgroup -g 1000 app && adduser -u 1000 -G app -S app

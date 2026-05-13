@@ -5,6 +5,8 @@ import java.util.UUID;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.Id;
 import jakarta.persistence.Table;
 
@@ -41,6 +43,31 @@ public class ListaBlanca {
 
     @Column(name = "estado")
     private String estado;
+
+    @Column(name = "mfa_enabled", nullable = false)
+    private boolean mfaEnabled = false;
+
+    @Column(name = "mfa_secret", length = 512)
+    private String mfaSecret;
+
+    @Column(name = "mfa_configured_at")
+    private LocalDateTime mfaConfiguredAt;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "mfa_method", length = 20, nullable = false)
+    private MetodoMFA mfaMethod = MetodoMFA.NONE;
+
+    @Column(name = "failed_attempts", nullable = false)
+    private int failedAttempts = 0;
+
+    @Column(name = "last_failed_at")
+    private LocalDateTime lastFailedAt;
+
+    @Column(name = "contrasena_hash", length = 256)
+    private String contrasenaHash;
+
+    @Column(name = "rol")
+    private String rol;
 
     public ListaBlanca() {
     }
@@ -125,4 +152,67 @@ public class ListaBlanca {
         this.estado = estado;
     }
 
+    public boolean isMfaEnabled() {
+        return mfaEnabled;
+    }
+
+    public void setMfaEnabled(boolean mfaEnabled) {
+        this.mfaEnabled = mfaEnabled;
+    }
+
+    public String getMfaSecret() {
+        return mfaSecret;
+    }
+
+    public void setMfaSecret(String mfaSecret) {
+        this.mfaSecret = mfaSecret;
+    }
+
+    public LocalDateTime getMfaConfiguredAt() {
+        return mfaConfiguredAt;
+    }
+
+    public void setMfaConfiguredAt(LocalDateTime mfaConfiguredAt) {
+        this.mfaConfiguredAt = mfaConfiguredAt;
+    }
+
+    public MetodoMFA getMfaMethod() {
+        return mfaMethod;
+    }
+
+    public void setMfaMethod(MetodoMFA mfaMethod) {
+        this.mfaMethod = mfaMethod;
+    }
+
+    public int getFailedAttempts() {
+        return failedAttempts;
+    }
+
+    public void setFailedAttempts(int failedAttempts) {
+        this.failedAttempts = failedAttempts;
+    }
+
+    public LocalDateTime getLastFailedAt() {
+        return lastFailedAt;
+    }
+
+    public void setLastFailedAt(LocalDateTime lastFailedAt) {
+        this.lastFailedAt = lastFailedAt;
+    }
+
+    public String getContrasenaHash() {
+        return contrasenaHash;
+    }
+
+    public void setContrasenaHash(String contrasenaHash) {
+        this.contrasenaHash = contrasenaHash;
+    }
+
+    public String getRol() {
+        return rol;
+    }
+
+    public void setRol(String rol) {
+        this.rol = rol;
+    }
 }
