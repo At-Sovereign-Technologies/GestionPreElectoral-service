@@ -45,6 +45,9 @@ public class RegistroCenso {
 	@Column(name = "actor_ultima_modificacion", nullable = false, length = 120)
 	private String actorUltimaModificacion;
 
+	@Column(name = "hash_biometrico", nullable = false, length = 64)
+	private String hashBiometrico;
+
 	@Column(name = "fecha_creacion", nullable = false)
 	private LocalDateTime fechaCreacion;
 
@@ -55,13 +58,14 @@ public class RegistroCenso {
 	}
 
 	public RegistroCenso(Long eleccionId, Ciudadano ciudadano, EstadoCenso estado, CausalCenso causalEstado,
-			String observacion, String actorUltimaModificacion) {
+			String observacion, String actorUltimaModificacion, String hashBiometrico) {
 		this.eleccionId = eleccionId;
 		this.ciudadano = ciudadano;
 		this.estado = estado;
 		this.causalEstado = causalEstado;
 		this.observacion = observacion;
 		this.actorUltimaModificacion = actorUltimaModificacion;
+		this.hashBiometrico = hashBiometrico;
 	}
 
 	@PrePersist
@@ -81,6 +85,10 @@ public class RegistroCenso {
 		this.causalEstado = causalEstado;
 		this.observacion = observacion;
 		this.actorUltimaModificacion = actor;
+	}
+
+	public void actualizarHashBiometrico(String hashBiometrico) {
+		this.hashBiometrico = hashBiometrico;
 	}
 
 	public Long getId() {
@@ -109,6 +117,10 @@ public class RegistroCenso {
 
 	public String getActorUltimaModificacion() {
 		return actorUltimaModificacion;
+	}
+
+	public String getHashBiometrico() {
+		return hashBiometrico;
 	}
 
 	public LocalDateTime getFechaActualizacion() {

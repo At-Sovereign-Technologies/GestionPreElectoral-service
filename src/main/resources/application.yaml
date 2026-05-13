@@ -22,6 +22,8 @@ spring:
     enabled: true
     locations: classpath:db/migration
     baseline-on-migrate: true
+    validate-on-migrate: false
+    baseline-version: 0
 
   cache:
     type: caffeine
@@ -47,4 +49,4 @@ grpc:
     port: ${ELECCIONES_GRPC_PORT:9090}
 
 fotos:
-  directorio: ${FOTOS_DIRECTORIO:/data/fotos-candidatos}
+  directorio: ${FOTOS_DIRECTORIO:uploads/fotos-candidatos}

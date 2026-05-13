@@ -1,0 +1,32 @@
+package com.selloLegitimo.GestionPreElectoral.repositorio;
+
+import java.util.List;
+import java.util.Optional;
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Query;
+
+import com.selloLegitimo.GestionPreElectoral.modelo.ListaBlanca;
+
+public interface ListaBlancaRepositorio extends JpaRepository<ListaBlanca, UUID> {
+
+    Optional<ListaBlanca> findByCiudadanoId(String ciudadanoId);
+
+    long countByEstado(String estado);
+
+    @Query("SELECT l.zonaInscripcion, COUNT(l) FROM ListaBlanca l WHERE l.estado = 'HABILITADO' GROUP BY l.zonaInscripcion")
+    List<Object[]> contarPorZona();
+
+    @Query("SELECT l FROM ListaBlanca l WHERE l.estado = 'HABILITADO' ORDER BY l.numeroDocumento ASC")
+    List<ListaBlanca> listarActivosOrdenados();
+
+    @Query("SELECT lb FROM ListaBlanca lb WHERE NOT EXISTS (SELECT rc FROM RegistroCenso rc WHERE rc.ciudadanoId = lb.ciudadanoId)")
+    List<ListaBlanca> buscarCiudadanosSinCenso();
+
+    @Query("SELECT lb.estado, COUNT(lb) FROM ListaBlanca lb GROUP BY lb.estado")
+    List<Object[]> contarPorEstado();
+
+    @Query("SELECT FUNCTION('DATE', lb.fechaEnrolamiento), COUNT(lb) FROM ListaBlanca lb GROUP BY FUNCTION('DATE', lb.fechaEnrolamiento) ORDER BY FUNCTION('DATE', lb.fechaEnrolamiento)")
+    List<Object[]> contarPorPeriodo();
+}

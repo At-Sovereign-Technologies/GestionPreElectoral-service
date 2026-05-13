@@ -16,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.selloLegitimo.GestionPreElectoral.dto.ActualizarEstadoCensoSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.AutorizacionCierreSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CongelarCensoSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CongelamientoCensoRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.CausalesEleccionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.EleccionResumenDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ImportarCensoApiSolicitudDto;
@@ -64,6 +66,12 @@ public class ControladorCenso {
 	public RegistroCensoRespuestaDto actualizarEstado(@PathVariable Long registroId,
 			@Valid @RequestBody ActualizarEstadoCensoSolicitudDto solicitud) {
 		return servicioCenso.actualizarEstado(registroId, solicitud);
+	}
+
+	@PostMapping("/elecciones/{eleccionId}/congelar")
+	public CongelamientoCensoRespuestaDto congelarCenso(@PathVariable Long eleccionId,
+			@Valid @RequestBody CongelarCensoSolicitudDto solicitud) {
+		return servicioCenso.congelarCenso(eleccionId, solicitud);
 	}
 
 	@GetMapping("/elecciones/{eleccionId}/registros")
