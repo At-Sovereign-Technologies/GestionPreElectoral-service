@@ -23,4 +23,10 @@ public interface ListaBlancaRepositorio extends JpaRepository<ListaBlanca, UUID>
 
     @Query("SELECT lb FROM ListaBlanca lb WHERE NOT EXISTS (SELECT rc FROM RegistroCenso rc WHERE rc.ciudadanoId = lb.ciudadanoId)")
     List<ListaBlanca> buscarCiudadanosSinCenso();
+
+    @Query("SELECT lb.estado, COUNT(lb) FROM ListaBlanca lb GROUP BY lb.estado")
+    List<Object[]> contarPorEstado();
+
+    @Query("SELECT FUNCTION('DATE', lb.fechaEnrolamiento), COUNT(lb) FROM ListaBlanca lb GROUP BY FUNCTION('DATE', lb.fechaEnrolamiento) ORDER BY FUNCTION('DATE', lb.fechaEnrolamiento)")
+    List<Object[]> contarPorPeriodo();
 }

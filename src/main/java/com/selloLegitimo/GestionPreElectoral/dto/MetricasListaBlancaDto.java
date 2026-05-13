@@ -2,59 +2,50 @@ package com.selloLegitimo.GestionPreElectoral.dto;
 
 import java.util.List;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
 public class MetricasListaBlancaDto {
 
     private long totalCiudadanos;
+
     private List<ZonaConteo> porZona;
 
-    public MetricasListaBlancaDto() {}
+    private List<PeriodoConteo> porPeriodo;
 
-    public MetricasListaBlancaDto(long totalCiudadanos, List<ZonaConteo> porZona) {
-        this.totalCiudadanos = totalCiudadanos;
-        this.porZona = porZona;
-    }
+    private List<EstadoConteo> porEstado;
 
-    public long getTotalCiudadanos() {
-        return totalCiudadanos;
-    }
-
-    public void setTotalCiudadanos(long totalCiudadanos) {
-        this.totalCiudadanos = totalCiudadanos;
-    }
-
-    public List<ZonaConteo> getPorZona() {
-        return porZona;
-    }
-
-    public void setPorZona(List<ZonaConteo> porZona) {
-        this.porZona = porZona;
-    }
-
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
     public static class ZonaConteo {
+
         private String zona;
+
         private long conteo;
+    }
 
-        public ZonaConteo() {}
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class PeriodoConteo {
 
-        public ZonaConteo(String zona, long conteo) {
-            this.zona = zona;
-            this.conteo = conteo;
-        }
+        private String periodo;
 
-        public String getZona() {
-            return zona;
-        }
+        private long conteo;
+    }
 
-        public void setZona(String zona) {
-            this.zona = zona;
-        }
+    @Data
+    @NoArgsConstructor
+    @AllArgsConstructor
+    public static class EstadoConteo {
 
-        public long getConteo() {
-            return conteo;
-        }
+        private String estado;
 
-        public void setConteo(long conteo) {
-            this.conteo = conteo;
-        }
+        private long conteo;
     }
 }

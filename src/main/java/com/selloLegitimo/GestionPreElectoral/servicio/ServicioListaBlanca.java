@@ -54,15 +54,74 @@ public class ServicioListaBlanca {
     }
 
     public MetricasListaBlancaDto obtenerMetricas() {
+
         long total = repo.countByEstado("HABILITADO");
-        List<Object[]> agrupado = repo.contarPorZona();
+
+        // MÉTRICAS POR ZONA
+        List<Object[]> agrupadoZona = repo.contarPorZona();
+
         List<MetricasListaBlancaDto.ZonaConteo> zonas = new ArrayList<>();
-        for (Object[] row : agrupado) {
+
+        for (Object[] row : agrupadoZona) {
+
             String zona = (String) row[0];
+
             Long conteo = (Long) row[1];
-            zonas.add(new MetricasListaBlancaDto.ZonaConteo(zona, conteo));
+
+            zonas.add(
+                    new MetricasListaBlancaDto.ZonaConteo(
+                            zona,
+                            conteo
+                    )
+            );
         }
-        return new MetricasListaBlancaDto(total, zonas);
+
+        // MÉTRICAS POR PERÍODO
+        List<Object[]> agrupadoPeriodo = repo.contarPorPeriodo();
+
+        List<MetricasListaBlancaDto.PeriodoConteo> periodos =
+                new ArrayList<>();
+
+        for (Object[] row : agrupadoPeriodo) {
+
+            String periodo = row[0].toString();
+
+            Long conteo = (Long) row[1];
+
+            periodos.add(
+                    new MetricasListaBlancaDto.PeriodoConteo(
+                            periodo,
+                            conteo
+                    )
+            );
+        }
+
+        // MÉTRICAS POR ESTADO
+        List<Object[]> agrupadoEstado = repo.contarPorEstado();
+
+        List<MetricasListaBlancaDto.EstadoConteo> estados =
+                new ArrayList<>();
+
+        for (Object[] row : agrupadoEstado) {
+
+            String estado = (String) row[0];
+
+            Long conteo = (Long) row[1];
+
+            estados.add(
+                    new MetricasListaBlancaDto.EstadoConteo(
+                            estado,
+                            conteo
+                    )
+            );
+        }
+
+        return new MetricasListaBlancaDto(
+                total,
+                zonas,
+                periodos,
+                estados
+        );
     }
 
     public String verificarIntegridad() {
