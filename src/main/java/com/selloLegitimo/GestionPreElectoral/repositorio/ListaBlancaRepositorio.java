@@ -20,4 +20,7 @@ public interface ListaBlancaRepositorio extends JpaRepository<ListaBlanca, UUID>
 
     @Query("SELECT l FROM ListaBlanca l WHERE l.estado = 'HABILITADO' ORDER BY l.numeroDocumento ASC")
     List<ListaBlanca> listarActivosOrdenados();
+
+    @Query("SELECT lb FROM ListaBlanca lb WHERE NOT EXISTS (SELECT rc FROM RegistroCenso rc WHERE rc.ciudadanoId = lb.ciudadanoId)")
+    List<ListaBlanca> buscarCiudadanosSinCenso();
 }

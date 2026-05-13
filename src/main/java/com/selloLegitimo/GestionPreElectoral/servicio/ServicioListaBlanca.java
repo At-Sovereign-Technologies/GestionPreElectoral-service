@@ -7,17 +7,14 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.UUID;
-
-import jakarta.persistence.EntityManager;
-import org.springframework.transaction.annotation.Transactional;
-
-import org.springframework.stereotype.Service;
-
 import java.util.stream.Collectors;
 
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.selloLegitimo.GestionPreElectoral.dto.AlertaListaBlancaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.FirmaActorDto;
 import com.selloLegitimo.GestionPreElectoral.dto.FirmasModificacionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.HistoricoIntegridadDto;
@@ -31,6 +28,8 @@ import com.selloLegitimo.GestionPreElectoral.modelo.ListaBlancaAuditoria;
 import com.selloLegitimo.GestionPreElectoral.modelo.TipoEventoAuditoria;
 import com.selloLegitimo.GestionPreElectoral.repositorio.ListaBlancaAuditoriaRepositorio;
 import com.selloLegitimo.GestionPreElectoral.repositorio.ListaBlancaRepositorio;
+
+import jakarta.persistence.EntityManager;
 
 @Service
 public class ServicioListaBlanca {
@@ -213,5 +212,18 @@ public class ServicioListaBlanca {
                         audit.getFirmanteCne()
                 ))
                 .collect(Collectors.toList());
+    }
+
+    public List<AlertaListaBlancaDto> obtenerAlertas() {
+
+        List<ListaBlanca> inconsistencias =
+                repo.buscarCiudadanosSinCenso();
+
+        return inconsistencias.stream()
+                .map(lb -> new AlertaListaBlancaDto(
+                        lb.getCiudadanoId().toString(),
+                        "Ciudadano enrolado no encontrado en censo SR-M2"
+                ))
+                .toList();
     }
 }

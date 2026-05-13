@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import com.selloLegitimo.GestionPreElectoral.dto.AlertaListaBlancaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.HistoricoIntegridadDto;
 import com.selloLegitimo.GestionPreElectoral.dto.MetricasListaBlancaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ModificarEmergenciaRequestDto;
@@ -53,5 +54,14 @@ public class ControladorListaBlanca {
                 servicio.obtenerHistoricoIntegridad();
 
         return ResponseEntity.ok(historial);
+    }
+
+    @GetMapping("/alertas")
+    public ResponseEntity<List<AlertaListaBlancaDto>> obtenerAlertas() {
+
+        List<AlertaListaBlancaDto> alertas =
+                servicio.obtenerAlertas();
+
+        return ResponseEntity.ok(alertas);
     }
 }
