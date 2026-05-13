@@ -49,4 +49,4 @@ grpc:
     port: ${ELECCIONES_GRPC_PORT:9090}
 
 fotos:
-  directorio: ${FOTOS_DIRECTORIO:/data/fotos-candidatos}
+  directorio: ${FOTOS_DIRECTORIO:uploads/fotos-candidatos}

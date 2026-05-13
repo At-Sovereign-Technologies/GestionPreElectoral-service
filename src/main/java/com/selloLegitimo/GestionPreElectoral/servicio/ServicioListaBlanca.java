@@ -15,9 +15,12 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.stereotype.Service;
 
+import java.util.stream.Collectors;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.selloLegitimo.GestionPreElectoral.dto.FirmaActorDto;
 import com.selloLegitimo.GestionPreElectoral.dto.FirmasModificacionDto;
+import com.selloLegitimo.GestionPreElectoral.dto.HistoricoIntegridadDto;
 import com.selloLegitimo.GestionPreElectoral.dto.MetricasListaBlancaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ModificarEmergenciaRequestDto;
 import com.selloLegitimo.GestionPreElectoral.excepcion.ExcepcionNegocio;
@@ -195,5 +198,20 @@ public class ServicioListaBlanca {
         } catch (Exception ex) {
             throw new ExcepcionNegocio("Error calculando hash de integridad de la lista blanca");
         }
+    }
+
+    public List<HistoricoIntegridadDto> obtenerHistoricoIntegridad() {
+
+        List<ListaBlancaAuditoria> auditorias = auditoriaRepo.findAllByOrderByFechaModificacionDesc();
+
+        return auditorias.stream()
+                .map(audit -> new HistoricoIntegridadDto(
+                        audit.getVersionHash(),
+                        audit.getFechaModificacion(),
+                        audit.getJustificacion(),
+                        audit.getFirmanteSuperadmin(),
+                        audit.getFirmanteCne()
+                ))
+                .collect(Collectors.toList());
     }
 }
