@@ -23,9 +23,20 @@ CREATE TABLE IF NOT EXISTS gestion_pre_electoral.lista_blanca_auditoria (
     fecha_modificacion TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
 );
 
-ALTER TABLE IF EXISTS gestion_pre_electoral.lista_blanca_auditoria
-    ADD CONSTRAINT fk_lista_blanca_auditoria_lista_blanca
-    FOREIGN KEY (lista_blanca_id) REFERENCES gestion_pre_electoral.lista_blanca (id) ON DELETE CASCADE;
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1
+        FROM pg_constraint c
+        JOIN pg_namespace n ON n.oid = c.connamespace
+        WHERE c.conname = 'fk_lista_blanca_auditoria_lista_blanca'
+          AND n.nspname = 'gestion_pre_electoral'
+    ) THEN
+        ALTER TABLE gestion_pre_electoral.lista_blanca_auditoria
+            ADD CONSTRAINT fk_lista_blanca_auditoria_lista_blanca
+            FOREIGN KEY (lista_blanca_id) REFERENCES gestion_pre_electoral.lista_blanca (id) ON DELETE CASCADE;
+    END IF;
+END $$;
 
 -- Insertar 50 registros mock realistas
 DO $$
