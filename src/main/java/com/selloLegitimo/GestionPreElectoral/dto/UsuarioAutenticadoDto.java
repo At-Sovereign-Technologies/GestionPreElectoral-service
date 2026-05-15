@@ -26,6 +26,7 @@ public class UsuarioAutenticadoDto {
         return Map.of(
             "numeroDocumento", numeroDocumento != null ? numeroDocumento : "",
             "nombre", nombre != null ? nombre : "",
+            "nombreCompleto", nombre != null ? nombre : "",
             "rol", rol != null ? rol : "",
             "telefono", telefono != null ? telefono : "",
             "correo", correo != null ? correo : "",

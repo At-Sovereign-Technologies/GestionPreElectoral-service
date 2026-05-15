@@ -99,31 +99,31 @@ public class ServicioBoveda {
 
         ListaBlanca submitter = optSubmitter.get();
 
-        Optional<ClaveroKeyRecord> optRecord =
-            claveroRepositorio.findByMagistradoIdAndShardIndex(submitter.getId(), 1);
-        if (optRecord.isEmpty()) {
-            logger.warn("[CEREMONY] No se encontro ClaveroKeyRecord para submitter {}", submitterDoc);
-            return Optional.empty();
-        }
-
-        ClaveroKeyRecord record = optRecord.get();
-        String submittedFingerprint = sha256(shardValue);
-
         // TODO: reemplazar validación de shards simulada con reconstrucción real de Shamir Secret Sharing
         // Simulado: aceptar valores de shard de prueba
         boolean mockValid = shardValue.startsWith("MOCK_SHARD_INDEX_");
 
-        boolean shardValid = mockValid ||
-            record.getShardFingerprint().equalsIgnoreCase(submittedFingerprint);
+        if (!mockValid) {
+            Optional<ClaveroKeyRecord> optRecord =
+                claveroRepositorio.findByMagistradoIdAndShardIndex(submitter.getId(), 1);
+            if (optRecord.isEmpty()) {
+                logger.warn("[CEREMONY] No se encontro ClaveroKeyRecord para submitter {}", submitterDoc);
+                return Optional.empty();
+            }
 
-        if (!shardValid) {
-            logger.warn("[CEREMONY] Shard no valido para {} - fingerprint mismatch", submitterDoc);
-            return Optional.empty();
+            ClaveroKeyRecord record = optRecord.get();
+            String submittedFingerprint = sha256(shardValue);
+
+            if (!record.getShardFingerprint().equalsIgnoreCase(submittedFingerprint)) {
+                logger.warn("[CEREMONY] Shard no valido para {} - fingerprint mismatch", submitterDoc);
+                return Optional.empty();
+            }
+
+            record.setLastUsedCeremonyId(ceremonyId);
+            claveroRepositorio.save(record);
         }
 
         ceremony.setSubmittedShards(ceremony.getSubmittedShards() + 1);
-        record.setLastUsedCeremonyId(ceremonyId);
-        claveroRepositorio.save(record);
 
         logger.info("[MOCK] Shard aceptado de {} para ceremonia {} ({}/{})",
             submitterDoc, ceremonyId, ceremony.getSubmittedShards(), ceremony.getRequiredShards());

@@ -17,14 +17,17 @@ import com.selloLegitimo.GestionPreElectoral.dto.MFASetupRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.MFAVerifySolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.MFAVerifyRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.UsuarioAutenticadoDto;
+import com.selloLegitimo.GestionPreElectoral.modelo.Ciudadano;
 import com.selloLegitimo.GestionPreElectoral.modelo.ListaBlanca;
 import com.selloLegitimo.GestionPreElectoral.modelo.MetodoMFA;
 import com.selloLegitimo.GestionPreElectoral.modelo.TipoAccionAuditoria;
+import com.selloLegitimo.GestionPreElectoral.repositorio.CiudadanoRepositorio;
 import com.selloLegitimo.GestionPreElectoral.repositorio.ListaBlancaRepositorio;
 import com.selloLegitimo.GestionPreElectoral.servicio.ServicioAuditoria;
 import com.selloLegitimo.GestionPreElectoral.servicio.ServicioSeguridadAlertas;
 import com.selloLegitimo.GestionPreElectoral.util.GeneradorTokenUtil;
 import com.selloLegitimo.GestionPreElectoral.util.UtilAutorizacion;
+import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 
 @RestController
 @RequestMapping("/api/v1/auth")
@@ -34,13 +37,16 @@ public class ControladorAuth {
     private static final int UMBRAL_ALERTAS_FALLIDAS = 5;
 
     private final ListaBlancaRepositorio listaBlancaRepositorio;
+    private final CiudadanoRepositorio ciudadanoRepositorio;
     private final ServicioAuditoria servicioAuditoria;
     private final ServicioSeguridadAlertas servicioAlertas;
 
     public ControladorAuth(ListaBlancaRepositorio listaBlancaRepositorio,
+                           CiudadanoRepositorio ciudadanoRepositorio,
                            ServicioAuditoria servicioAuditoria,
                            ServicioSeguridadAlertas servicioAlertas) {
         this.listaBlancaRepositorio = listaBlancaRepositorio;
+        this.ciudadanoRepositorio = ciudadanoRepositorio;
         this.servicioAuditoria = servicioAuditoria;
         this.servicioAlertas = servicioAlertas;
     }
@@ -216,17 +222,32 @@ public class ControladorAuth {
         return ResponseEntity.ok(buildUserInfo(optUsuario.get()));
     }
 
+    private final BCryptPasswordEncoder passwordEncoder = new BCryptPasswordEncoder();
+
     private boolean validarContrasena(String raw, String hash) {
         if (hash == null || hash.isBlank()) {
-            return raw.equals("password123");
+            return false;
         }
-        return hash.equals("$2a$10$N9qo8uLOickgx2ZMRZoMye9jT/.rGgNLGR0nV1cX7U0pW8kXj6aJGe") && raw.equals("password123");
+        return passwordEncoder.matches(raw, hash);
+    }
+
+    private String resolveNombreCompleto(ListaBlanca usuario) {
+        try {
+            String doc = usuario.getNumeroDocumento();
+            if (doc != null) {
+                java.util.Optional<Ciudadano> ciudadano = ciudadanoRepositorio.findByNumeroDocumento(doc);
+                if (ciudadano.isPresent()) {
+                    return ciudadano.get().getNombres() + " " + ciudadano.get().getApellidos();
+                }
+            }
+        } catch (Exception ignored) {}
+        return usuario.getNumeroDocumento();
     }
 
     private Map<String, Object> buildUserInfo(ListaBlanca usuario) {
         return new UsuarioAutenticadoDto(
             usuario.getNumeroDocumento(),
-            usuario.getCiudadanoId(),
+            resolveNombreCompleto(usuario),
             usuario.getRol(),
             usuario.getTelefonoCelular(),
             usuario.getCorreoElectronico(),
