@@ -36,7 +36,7 @@ spring:
       max-request-size: 2MB
 
 server:
-  port: ${PUERTO:8082}
+  port: ${PUERTO:8181}
 
 logging:
   level:

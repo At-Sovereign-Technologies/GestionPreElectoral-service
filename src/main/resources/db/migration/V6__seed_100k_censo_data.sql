@@ -43,7 +43,7 @@ DECLARE
     v_causales_excluido TEXT[] := ARRAY['INTERDICCION_JUDICIAL','CONDENA_CON_PENA_ACCESORIA'];
     v_causales_exento TEXT[] := ARRAY['FUERZA_PUBLICA_ACTIVA','MAYOR_LIMITE_EDAD','DISCAPACIDAD_REGISTRADA'];
 
-    v_total_ciudadanos INT := 100000;
+    v_total_ciudadanos INT := 1000;
     v_total_censo INT := 0;
     v_cedula TEXT;
     v_nombre TEXT;

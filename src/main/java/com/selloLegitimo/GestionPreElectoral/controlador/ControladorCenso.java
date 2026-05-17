@@ -98,11 +98,6 @@ public class ControladorCenso {
 		return new MensajeRespuestaDto("Importación CSV completada con " + total + " registros");
 	}
 
-	@PostMapping("/importaciones/api")
-	public MensajeRespuestaDto importarApi(@Valid @RequestBody ImportarCensoApiSolicitudDto solicitud) {
-		int total = servicioCenso.importarApi(solicitud);
-		return new MensajeRespuestaDto("Importación API completada con " + total + " registros");
-	}
 
 	private AutorizacionCierreSolicitudDto construirAutorizacion(String superadministrador, String justificacion) {
 		if ((superadministrador == null || superadministrador.isBlank())

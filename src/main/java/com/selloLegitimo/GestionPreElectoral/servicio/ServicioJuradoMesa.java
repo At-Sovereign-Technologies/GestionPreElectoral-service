@@ -1,6 +1,7 @@
 package com.selloLegitimo.GestionPreElectoral.servicio;
 
 import java.util.HashSet;
+import java.util.Comparator;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
@@ -33,6 +34,31 @@ public class ServicioJuradoMesa {
 		}
 		return solicitudes.stream()
 			.map(this::guardar)
+			.map(this::mapear)
+			.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<JuradoMesaRespuestaDto> listarJurados() {
+		return juradoMesaRepositorio.findAll().stream()
+			.sorted(Comparator.comparing(JuradoMesa::getId))
+			.map(this::mapear)
+			.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<Long> listarMesas() {
+		return juradoMesaRepositorio.findAll().stream()
+			.map(JuradoMesa::getMesaId)
+			.distinct()
+			.sorted()
+			.toList();
+	}
+
+	@Transactional(readOnly = true)
+	public List<JuradoMesaRespuestaDto> listarJuradosPorMesa(Long mesaId) {
+		return juradoMesaRepositorio.findByMesaId(mesaId).stream()
+			.sorted(Comparator.comparing(JuradoMesa::getId))
 			.map(this::mapear)
 			.toList();
 	}

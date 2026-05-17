@@ -3,6 +3,7 @@ package com.selloLegitimo.GestionPreElectoral.controlador;
 import java.util.List;
 
 import org.springframework.validation.annotation.Validated;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -31,8 +32,27 @@ public class ControladorJuradosMesas {
 		return servicioJuradoMesa.sincronizar(solicitudes);
 	}
 
+	@GetMapping("/jurados")
+	public List<JuradoMesaRespuestaDto> listarJurados() {
+		return servicioJuradoMesa.listarJurados();
+	}
+
+	@GetMapping("/mesas")
+	public List<Long> listarMesas() {
+		return servicioJuradoMesa.listarMesas();
+	}
+
+	@GetMapping("/mesas/{mesaId}/jurados")
+	public List<JuradoMesaRespuestaDto> listarJuradosPorMesa(@PathVariable Long mesaId) {
+		return servicioJuradoMesa.listarJuradosPorMesa(mesaId);
+	}
+
 	@PostMapping("/mesas/{mesaId}/apertura")
 	public AperturaMesaRespuestaDto abrirMesa(@PathVariable Long mesaId, @RequestBody AperturaMesaSolicitudDto solicitud) {
 		return servicioJuradoMesa.abrirMesa(mesaId, solicitud);
 	}
+
+
+
+	
 }
