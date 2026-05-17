@@ -16,6 +16,8 @@ import org.springframework.web.multipart.MultipartFile;
 
 import com.selloLegitimo.GestionPreElectoral.dto.ActualizarEstadoCensoSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.AutorizacionCierreSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CongelarCensoSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CongelamientoCensoRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.CausalesEleccionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.EleccionResumenDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ImportarCensoApiSolicitudDto;
@@ -66,6 +68,12 @@ public class ControladorCenso {
 		return servicioCenso.actualizarEstado(registroId, solicitud);
 	}
 
+	@PostMapping("/elecciones/{eleccionId}/congelar")
+	public CongelamientoCensoRespuestaDto congelarCenso(@PathVariable Long eleccionId,
+			@Valid @RequestBody CongelarCensoSolicitudDto solicitud) {
+		return servicioCenso.congelarCenso(eleccionId, solicitud);
+	}
+
 	@GetMapping("/elecciones/{eleccionId}/registros")
 	public PaginaCensoRespuestaDto listarPorEleccion(@PathVariable Long eleccionId,
 			@RequestParam(required = false) String estado,
@@ -90,11 +98,6 @@ public class ControladorCenso {
 		return new MensajeRespuestaDto("Importación CSV completada con " + total + " registros");
 	}
 
-	@PostMapping("/importaciones/api")
-	public MensajeRespuestaDto importarApi(@Valid @RequestBody ImportarCensoApiSolicitudDto solicitud) {
-		int total = servicioCenso.importarApi(solicitud);
-		return new MensajeRespuestaDto("Importación API completada con " + total + " registros");
-	}
 
 	private AutorizacionCierreSolicitudDto construirAutorizacion(String superadministrador, String justificacion) {
 		if ((superadministrador == null || superadministrador.isBlank())

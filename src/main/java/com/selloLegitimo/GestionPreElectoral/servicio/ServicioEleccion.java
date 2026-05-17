@@ -6,8 +6,6 @@ import java.util.List;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import com.selloLegitimo.GestionPreElectoral.dto.CausalesEleccionDto;
 import com.selloLegitimo.GestionPreElectoral.dto.DetalleEleccionExternaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.EleccionResumenDto;
@@ -32,7 +30,6 @@ public class ServicioEleccion {
 		this.eleccionStub = eleccionStub;
 	}
 
-	@Transactional(readOnly = true)
 	public List<EleccionResumenDto> listarElecciones() {
 		logger.info("Consultando listado de elecciones por gRPC");
 
@@ -49,7 +46,6 @@ public class ServicioEleccion {
 		}
 	}
 
-	@Transactional(readOnly = true)
 	public DetalleEleccionExternaDto obtenerEleccion(Long eleccionId) {
 		logger.info("Consultando elección por gRPC. eleccionId={}", eleccionId);
 
@@ -75,7 +71,6 @@ public class ServicioEleccion {
 		}
 	}
 
-	@Transactional(readOnly = true)
 	public CausalesEleccionDto obtenerCausales(Long eleccionId) {
 		DetalleEleccionExternaDto eleccion = obtenerEleccion(eleccionId);
 		List<CausalesEleccionDto.CausalItemDto> excluido = List.of(

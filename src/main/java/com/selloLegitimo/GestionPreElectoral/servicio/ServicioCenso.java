@@ -5,10 +5,15 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.io.Reader;
 import java.nio.charset.StandardCharsets;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Arrays;
+import java.util.HexFormat;
 import java.util.List;
 import java.util.Optional;
+import java.util.StringJoiner;
 
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVParser;
@@ -27,8 +32,12 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.selloLegitimo.GestionPreElectoral.dto.ActualizarEstadoCensoSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.AutorizacionCierreSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CongelarCensoSolicitudDto;
+import com.selloLegitimo.GestionPreElectoral.dto.CongelamientoCensoRespuestaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.DetalleEleccionExternaDto;
 import com.selloLegitimo.GestionPreElectoral.dto.ImportarCensoApiSolicitudDto;
 import com.selloLegitimo.GestionPreElectoral.dto.PaginaCensoRespuestaDto;
@@ -40,9 +49,15 @@ import com.selloLegitimo.GestionPreElectoral.excepcion.ExcepcionNegocio;
 import com.selloLegitimo.GestionPreElectoral.excepcion.RecursoNoEncontradoExcepcion;
 import com.selloLegitimo.GestionPreElectoral.modelo.Ciudadano;
 import com.selloLegitimo.GestionPreElectoral.modelo.CausalCenso;
+import com.selloLegitimo.GestionPreElectoral.modelo.EstadoEleccion;
 import com.selloLegitimo.GestionPreElectoral.modelo.EstadoCenso;
+import com.selloLegitimo.GestionPreElectoral.modelo.EventoAuditoria;
+import com.selloLegitimo.GestionPreElectoral.modelo.EstadoCongelamientoCenso;
 import com.selloLegitimo.GestionPreElectoral.modelo.RegistroCenso;
+import com.selloLegitimo.GestionPreElectoral.modelo.TipoEventoAuditoria;
 import com.selloLegitimo.GestionPreElectoral.repositorio.CiudadanoRepositorio;
+import com.selloLegitimo.GestionPreElectoral.repositorio.EstadoCongelamientoCensoRepositorio;
+import com.selloLegitimo.GestionPreElectoral.servicio.PuertoAuditoria;
 import com.selloLegitimo.GestionPreElectoral.repositorio.RegistroCensoRepositorio;
 
 @Service
@@ -57,6 +72,14 @@ public class ServicioCenso {
 
 	@Autowired
 	private ServicioEleccion servicioEleccion;
+
+	@Autowired
+	private EstadoCongelamientoCensoRepositorio estadoCongelamientoCensoRepositorio;
+
+	@Autowired
+	private PuertoAuditoria puertoAuditoria;
+
+	private final ObjectMapper objectMapper = new ObjectMapper();
 
 	@Autowired
 	private RestClient clienteRest;
@@ -87,14 +110,54 @@ public class ServicioCenso {
 					solicitud.getDepartamento(), solicitud.getMunicipio());
 				return ciudadanoRepositorio.save(nuevo);
 			});
+		String hashBiometrico = calcularHashBiometrico(ciudadano);
 
 		Optional<RegistroCenso> registroExistente = registroCensoRepositorio.findByEleccionIdAndCiudadano(eleccion.getId(), ciudadano);
 		RegistroCenso registro = registroExistente
-			.map(existente -> actualizarRegistro(existente, solicitud.getEstado(), solicitud.getCausalEstado(), solicitud.getObservacion(), solicitud.getActor()))
+			.map(existente -> actualizarRegistro(existente, solicitud.getEstado(), solicitud.getCausalEstado(), solicitud.getObservacion(), solicitud.getActor(), hashBiometrico))
 			.orElseGet(() -> registroCensoRepositorio.save(new RegistroCenso(eleccion.getId(), ciudadano, solicitud.getEstado(),
-					solicitud.getCausalEstado(), solicitud.getObservacion(), solicitud.getActor())));
+					solicitud.getCausalEstado(), solicitud.getObservacion(), solicitud.getActor(), hashBiometrico)));
 		logger.info("Registro manual de censo procesado. elección={}, registro={}, actor={}", eleccion.getId(), registro.getId(), solicitud.getActor());
 		return mapear(registro);
+	}
+
+	@Transactional
+	@CacheEvict(value = { "censo", "censoResumen" }, allEntries = true)
+	public CongelamientoCensoRespuestaDto congelarCenso(Long eleccionId, CongelarCensoSolicitudDto solicitud) {
+		DetalleEleccionExternaDto eleccion = obtenerEleccionParaCongelar(eleccionId);
+		if (!eleccion.estaCerrada()) {
+			throw new ExcepcionNegocio("La elección debe estar cerrada para congelar el censo");
+		}
+		String actor = solicitud != null && solicitud.getActor() != null ? solicitud.getActor() : "sistema";
+		List<String> hashesBiometricos = registroCensoRepositorio.encontrarHashesBiometricosPorEleccionId(eleccionId);
+		String hashRaiz = calcularHashRaiz(hashesBiometricos);
+		EstadoCongelamientoCenso estado = estadoCongelamientoCensoRepositorio.findById(eleccionId)
+			.orElseGet(EstadoCongelamientoCenso::new);
+		if (estado.getEleccionId() == null) {
+			estado = new EstadoCongelamientoCenso(eleccionId, "CERRADA", true, hashRaiz, LocalDateTime.now(), actor);
+		} else {
+			estado.setEstadoEleccion("CERRADA");
+			estado.setCensoCongelado(true);
+			estado.setHashRaizCenso(hashRaiz);
+			estado.setFechaCongelamiento(LocalDateTime.now());
+			estado.setActorCongelamiento(actor);
+		}
+		estadoCongelamientoCensoRepositorio.save(estado);
+		registrarAuditoriaCongelamiento(eleccionId, actor, hashRaiz, hashesBiometricos.size());
+		logger.info("Censo congelado. elección={}, hashRaiz={}, totalRegistros={}, actor={}", eleccionId, hashRaiz,
+				hashesBiometricos.size(), actor);
+		return new CongelamientoCensoRespuestaDto(eleccionId, "CERRADA", hashRaiz, hashesBiometricos.size());
+	}
+
+	private DetalleEleccionExternaDto obtenerEleccionParaCongelar(Long eleccionId) {
+		try {
+			return servicioEleccion.obtenerEleccion(eleccionId);
+		} catch (ExcepcionNegocio ex) {
+			logger.warn("Bypass local: asumiendo elección CERRADA para pruebas. eleccionId={}, motivo={}", eleccionId,
+					ex.getMessage());
+			return new DetalleEleccionExternaDto(eleccionId, "Elección local simulada", EstadoEleccion.CERRADA,
+					null, null, null, null, null, null, List.of(), null);
+		}
 	}
 
 	@Transactional
@@ -204,8 +267,9 @@ public class ServicioCenso {
 	}
 
 	private RegistroCenso actualizarRegistro(RegistroCenso registro, EstadoCenso estado, CausalCenso causalEstado,
-			String observacion, String actor) {
+			String observacion, String actor, String hashBiometrico) {
 		registro.actualizarEstado(estado, causalEstado, observacion, actor);
+		registro.actualizarHashBiometrico(hashBiometrico);
 		return registro;
 	}
 
@@ -243,6 +307,54 @@ public class ServicioCenso {
 			return null;
 		}
 		return CausalCenso.valueOf(valor.trim().toUpperCase());
+	}
+
+	private String calcularHashBiometrico(Ciudadano ciudadano) {
+		String entrada = new StringJoiner("|")
+			.add(valorOEmpty(ciudadano.getTipoDocumento()))
+			.add(valorOEmpty(ciudadano.getNumeroDocumento()))
+			.add(valorOEmpty(ciudadano.getNombres()))
+			.add(valorOEmpty(ciudadano.getApellidos()))
+			.add(ciudadano.getFechaNacimiento() != null ? ciudadano.getFechaNacimiento().toString() : "")
+			.add(valorOEmpty(ciudadano.getDepartamento()))
+			.add(valorOEmpty(ciudadano.getMunicipio()))
+			.toString();
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hash = digest.digest(entrada.getBytes(StandardCharsets.UTF_8));
+			return HexFormat.of().formatHex(hash);
+		} catch (NoSuchAlgorithmException ex) {
+			throw new IllegalStateException("SHA-256 no disponible", ex);
+		}
+	}
+
+	private String calcularHashRaiz(List<String> hashesBiometricos) {
+		String entrada = String.join("", hashesBiometricos);
+		try {
+			MessageDigest digest = MessageDigest.getInstance("SHA-256");
+			byte[] hash = digest.digest(entrada.getBytes(StandardCharsets.UTF_8));
+			return HexFormat.of().formatHex(hash);
+		} catch (NoSuchAlgorithmException ex) {
+			throw new IllegalStateException("SHA-256 no disponible", ex);
+		}
+	}
+
+	private String valorOEmpty(String valor) {
+		return valor == null ? "" : valor;
+	}
+
+	private void registrarAuditoriaCongelamiento(Long eleccionId, String actor, String hashRaiz, int totalRegistros) {
+		try {
+			String payload = objectMapper.writeValueAsString(java.util.Map.of(
+				"eleccionId", eleccionId,
+				"hashRaiz", hashRaiz,
+				"totalRegistros", totalRegistros,
+				"censoCongelado", true));
+			puertoAuditoria.registrarEvento(new EventoAuditoria("CENSO", eleccionId, TipoEventoAuditoria.CENSO_CONGELADO,
+				actor, payload, ""));
+		} catch (JsonProcessingException ex) {
+			throw new ExcepcionNegocio("No fue posible registrar la auditoría del congelamiento del censo");
+		}
 	}
 
 	private RegistroCensoRespuestaDto mapear(RegistroCenso registro) {

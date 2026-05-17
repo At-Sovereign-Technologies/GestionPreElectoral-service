@@ -43,7 +43,7 @@ DECLARE
     v_causales_excluido TEXT[] := ARRAY['INTERDICCION_JUDICIAL','CONDENA_CON_PENA_ACCESORIA'];
     v_causales_exento TEXT[] := ARRAY['FUERZA_PUBLICA_ACTIVA','MAYOR_LIMITE_EDAD','DISCAPACIDAD_REGISTRADA'];
 
-    v_total_ciudadanos INT := 100000;
+    v_total_ciudadanos INT := 1000;
     v_total_censo INT := 0;
     v_cedula TEXT;
     v_nombre TEXT;
@@ -210,9 +210,17 @@ BEGIN
             END IF;
 
             INSERT INTO gestion_pre_electoral.registros_censo
-                (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
+                (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion, hash_biometrico)
             VALUES
-                (v_eleccion_idx, cid, v_estado, v_causal, v_observacion, 'seed-v6')
+                (v_eleccion_idx, cid, v_estado, v_causal, v_observacion, 'seed-v6', md5(concat_ws('|',
+                    (SELECT tipo_documento FROM gestion_pre_electoral.ciudadanos WHERE id = cid),
+                    (SELECT numero_documento FROM gestion_pre_electoral.ciudadanos WHERE id = cid),
+                    (SELECT nombres FROM gestion_pre_electoral.ciudadanos WHERE id = cid),
+                    (SELECT apellidos FROM gestion_pre_electoral.ciudadanos WHERE id = cid),
+                    coalesce((SELECT to_char(fecha_nacimiento, 'YYYY-MM-DD') FROM gestion_pre_electoral.ciudadanos WHERE id = cid), ''),
+                    coalesce((SELECT departamento FROM gestion_pre_electoral.ciudadanos WHERE id = cid), ''),
+                    coalesce((SELECT municipio FROM gestion_pre_electoral.ciudadanos WHERE id = cid), '')
+                )))
             ON CONFLICT (eleccion_id, ciudadano_id) DO NOTHING;
         END LOOP;
     END LOOP;

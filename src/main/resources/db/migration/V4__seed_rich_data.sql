@@ -55,93 +55,137 @@ SELECT setval('gestion_pre_electoral.ciudadanos_id_seq',
 -- 2. REGISTROS DE CENSO  (eleccion_id = 1  – Presidencial 2026)
 -- ------------------------------------------------------------
 INSERT INTO gestion_pre_electoral.registros_censo
-    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
-VALUES
-    -- HABILITADOS
-    (1,  1, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1,  2, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1,  3, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1,  6, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1,  7, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1,  9, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 10, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 12, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 13, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 14, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 16, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 17, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 18, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 19, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
-    (1, 23, 'HABILITADO', NULL,                          'Residente extranjero habilitado', 'seed-v4'),
-    (1, 24, 'HABILITADO', NULL,                          'Ciudadano con pasaporte habilitado', 'seed-v4'),
-    -- EXCLUIDOS
-    (1,  4, 'EXCLUIDO',   'INTERDICCION_JUDICIAL',       'Interdicción por incapacidad mental', 'seed-v4'),
-    (1,  8, 'EXCLUIDO',   'CONDENA_CON_PENA_ACCESORIA',  'Condena por delito grave con pena accesoria', 'seed-v4'),
-    -- EXENTOS
-    (1,  5, 'EXENTO',     'MAYOR_LIMITE_EDAD',           'Mayor de 60 años – exención por edad', 'seed-v4'),
-    (1, 11, 'EXENTO',     'DISCAPACIDAD_REGISTRADA',     'Discapacidad física certificada', 'seed-v4'),
-    (1, 15, 'EXENTO',     'MAYOR_LIMITE_EDAD',           'Mayor de 60 años – exención por edad', 'seed-v4'),
-    (1, 20, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',       'Militar en servicio activo', 'seed-v4'),
-    (1, 21, 'EXENTO',     'MAYOR_LIMITE_EDAD',           'Adulto mayor – exención por edad avanzada', 'seed-v4'),
-    (1, 22, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',       'Menor de edad – miembro de fuerza pública juvenil', 'seed-v4')
+    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion, hash_biometrico)
+SELECT
+    t.eleccion_id,
+    t.ciudadano_id,
+    t.estado,
+    t.causal_estado,
+    t.observacion,
+    t.actor_ultima_modificacion,
+    md5(concat_ws('|', c.tipo_documento, c.numero_documento, c.nombres, c.apellidos, coalesce(to_char(c.fecha_nacimiento, 'YYYY-MM-DD'), ''), coalesce(c.departamento, ''), coalesce(c.municipio, '')))
+FROM (
+    VALUES
+        -- HABILITADOS
+        (1,  1, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1,  2, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1,  3, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1,  6, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1,  7, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1,  9, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 10, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 12, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 13, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 14, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 16, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 17, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 18, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 19, 'HABILITADO', NULL,                          'Ciudadano habilitado', 'seed-v4'),
+        (1, 23, 'HABILITADO', NULL,                          'Residente extranjero habilitado', 'seed-v4'),
+        (1, 24, 'HABILITADO', NULL,                          'Ciudadano con pasaporte habilitado', 'seed-v4'),
+        -- EXCLUIDOS
+        (1,  4, 'EXCLUIDO',   'INTERDICCION_JUDICIAL',       'Interdicción por incapacidad mental', 'seed-v4'),
+        (1,  8, 'EXCLUIDO',   'CONDENA_CON_PENA_ACCESORIA',  'Condena por delito grave con pena accesoria', 'seed-v4'),
+        -- EXENTOS
+        (1,  5, 'EXENTO',     'MAYOR_LIMITE_EDAD',           'Mayor de 60 años – exención por edad', 'seed-v4'),
+        (1, 11, 'EXENTO',     'DISCAPACIDAD_REGISTRADA',     'Discapacidad física certificada', 'seed-v4'),
+        (1, 15, 'EXENTO',     'MAYOR_LIMITE_EDAD',           'Mayor de 60 años – exención por edad', 'seed-v4'),
+        (1, 20, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',       'Militar en servicio activo', 'seed-v4'),
+        (1, 21, 'EXENTO',     'MAYOR_LIMITE_EDAD',           'Adulto mayor – exención por edad avanzada', 'seed-v4'),
+        (1, 22, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',       'Menor de edad – miembro de fuerza pública juvenil', 'seed-v4')
+) AS t(eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
+JOIN gestion_pre_electoral.ciudadanos c ON c.id = t.ciudadano_id
 ON CONFLICT (eleccion_id, ciudadano_id) DO NOTHING;
 
 -- ------------------------------------------------------------
 -- 3. REGISTROS DE CENSO  (eleccion_id = 2  – Legislativa 2026)
 -- ------------------------------------------------------------
 INSERT INTO gestion_pre_electoral.registros_censo
-    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
-VALUES
-    (2,  1, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2,  2, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2,  3, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2,  6, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2,  7, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2,  9, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 10, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 12, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 13, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 14, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 16, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 17, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 18, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 19, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
-    (2, 23, 'HABILITADO', NULL,                         'Residente extranjero habilitado', 'seed-v4'),
-    (2, 24, 'HABILITADO', NULL,                         'Ciudadano con pasaporte habilitado', 'seed-v4'),
-    (2,  4, 'EXCLUIDO',   'INTERDICCION_JUDICIAL',      'Interdicción judicial vigente', 'seed-v4'),
-    (2,  8, 'EXCLUIDO',   'CONDENA_CON_PENA_ACCESORIA', 'Condena con pena accesoria vigente', 'seed-v4'),
-    (2,  5, 'EXENTO',     'MAYOR_LIMITE_EDAD',          'Exención por edad avanzada', 'seed-v4'),
-    (2, 11, 'EXENTO',     'DISCAPACIDAD_REGISTRADA',    'Exención por discapacidad', 'seed-v4'),
-    (2, 15, 'EXENTO',     'MAYOR_LIMITE_EDAD',          'Exención por edad avanzada', 'seed-v4'),
-    (2, 20, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',      'Exención fuerza pública activa', 'seed-v4'),
-    (2, 21, 'EXENTO',     'MAYOR_LIMITE_EDAD',          'Exención adulto mayor', 'seed-v4'),
-    (2, 22, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',      'Menor en fuerza pública juvenil', 'seed-v4')
+    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion, hash_biometrico)
+SELECT
+    t.eleccion_id,
+    t.ciudadano_id,
+    t.estado,
+    t.causal_estado,
+    t.observacion,
+    t.actor_ultima_modificacion,
+    md5(concat_ws('|', c.tipo_documento, c.numero_documento, c.nombres, c.apellidos, coalesce(to_char(c.fecha_nacimiento, 'YYYY-MM-DD'), ''), coalesce(c.departamento, ''), coalesce(c.municipio, '')))
+FROM (
+    VALUES
+        (2,  1, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2,  2, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2,  3, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2,  6, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2,  7, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2,  9, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 10, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 12, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 13, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 14, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 16, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 17, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 18, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 19, 'HABILITADO', NULL,                         'Habilitado para legislativa', 'seed-v4'),
+        (2, 23, 'HABILITADO', NULL,                         'Residente extranjero habilitado', 'seed-v4'),
+        (2, 24, 'HABILITADO', NULL,                         'Ciudadano con pasaporte habilitado', 'seed-v4'),
+        (2,  4, 'EXCLUIDO',   'INTERDICCION_JUDICIAL',      'Interdicción judicial vigente', 'seed-v4'),
+        (2,  8, 'EXCLUIDO',   'CONDENA_CON_PENA_ACCESORIA', 'Condena con pena accesoria vigente', 'seed-v4'),
+        (2,  5, 'EXENTO',     'MAYOR_LIMITE_EDAD',          'Exención por edad avanzada', 'seed-v4'),
+        (2, 11, 'EXENTO',     'DISCAPACIDAD_REGISTRADA',    'Exención por discapacidad', 'seed-v4'),
+        (2, 15, 'EXENTO',     'MAYOR_LIMITE_EDAD',          'Exención por edad avanzada', 'seed-v4'),
+        (2, 20, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',      'Exención fuerza pública activa', 'seed-v4'),
+        (2, 21, 'EXENTO',     'MAYOR_LIMITE_EDAD',          'Exención adulto mayor', 'seed-v4'),
+        (2, 22, 'EXENTO',     'FUERZA_PUBLICA_ACTIVA',      'Menor en fuerza pública juvenil', 'seed-v4')
+) AS t(eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
+JOIN gestion_pre_electoral.ciudadanos c ON c.id = t.ciudadano_id
 ON CONFLICT (eleccion_id, ciudadano_id) DO NOTHING;
 
 -- ------------------------------------------------------------
 -- 4. REGISTROS DE CENSO  (eleccion_id = 3  – Gobernador Antioquia 2027)
 -- ------------------------------------------------------------
 INSERT INTO gestion_pre_electoral.registros_censo
-    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
-VALUES
-    (3, 1, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
-    (3, 2, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
-    (3, 6, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
-    (3, 9, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
-    (3, 12, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4')
+    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion, hash_biometrico)
+SELECT
+    t.eleccion_id,
+    t.ciudadano_id,
+    t.estado,
+    t.causal_estado,
+    t.observacion,
+    t.actor_ultima_modificacion,
+    md5(concat_ws('|', c.tipo_documento, c.numero_documento, c.nombres, c.apellidos, coalesce(to_char(c.fecha_nacimiento, 'YYYY-MM-DD'), ''), coalesce(c.departamento, ''), coalesce(c.municipio, '')))
+FROM (
+    VALUES
+        (3, 1, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
+        (3, 2, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
+        (3, 6, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
+        (3, 9, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4'),
+        (3, 12, 'HABILITADO', NULL, 'Habilitado gobernación Antioquia', 'seed-v4')
+) AS t(eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
+JOIN gestion_pre_electoral.ciudadanos c ON c.id = t.ciudadano_id
 ON CONFLICT (eleccion_id, ciudadano_id) DO NOTHING;
 
 -- ------------------------------------------------------------
 -- 5. REGISTROS DE CENSO  (eleccion_id = 4  – Alcalde Bogotá 2027)
 -- ------------------------------------------------------------
 INSERT INTO gestion_pre_electoral.registros_censo
-    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
-VALUES
-    (4, 1, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
-    (4, 3, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
-    (4, 7, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
-    (4, 10, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
-    (4, 13, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4')
+    (eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion, hash_biometrico)
+SELECT
+    t.eleccion_id,
+    t.ciudadano_id,
+    t.estado,
+    t.causal_estado,
+    t.observacion,
+    t.actor_ultima_modificacion,
+    md5(concat_ws('|', c.tipo_documento, c.numero_documento, c.nombres, c.apellidos, coalesce(to_char(c.fecha_nacimiento, 'YYYY-MM-DD'), ''), coalesce(c.departamento, ''), coalesce(c.municipio, '')))
+FROM (
+    VALUES
+        (4, 1, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
+        (4, 3, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
+        (4, 7, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
+        (4, 10, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4'),
+        (4, 13, 'HABILITADO', NULL, 'Habilitado alcaldía Bogotá', 'seed-v4')
+) AS t(eleccion_id, ciudadano_id, estado, causal_estado, observacion, actor_ultima_modificacion)
+JOIN gestion_pre_electoral.ciudadanos c ON c.id = t.ciudadano_id
 ON CONFLICT (eleccion_id, ciudadano_id) DO NOTHING;
 
 -- ------------------------------------------------------------

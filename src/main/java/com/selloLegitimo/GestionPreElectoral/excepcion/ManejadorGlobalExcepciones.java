@@ -5,6 +5,7 @@ import java.time.LocalDateTime;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.dao.DataAccessException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -23,6 +24,17 @@ public class ManejadorGlobalExcepciones {
 	public ResponseEntity<ErrorRespuestaDto> manejarNegocio(RuntimeException ex) {
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
 			.body(new ErrorRespuestaDto(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), ex.getMessage()));
+	}
+
+	@ExceptionHandler({ DataAccessException.class })
+	public ResponseEntity<ErrorRespuestaDto> manejarDataAccess(DataAccessException ex) {
+		String mensaje = ex.getMostSpecificCause() != null ? ex.getMostSpecificCause().getMessage() : ex.getMessage();
+		if (mensaje != null && mensaje.toUpperCase().contains("CERRADA")) {
+			return ResponseEntity.status(HttpStatus.FORBIDDEN)
+				.body(new ErrorRespuestaDto(LocalDateTime.now(), HttpStatus.FORBIDDEN.value(), "Operación prohibida: elección CERRADA"));
+		}
+		return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+			.body(new ErrorRespuestaDto(LocalDateTime.now(), HttpStatus.BAD_REQUEST.value(), mensaje));
 	}
 
 	@ExceptionHandler(MethodArgumentNotValidException.class)
